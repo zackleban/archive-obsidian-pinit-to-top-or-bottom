@@ -158,24 +158,30 @@ var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
     }
     return -1;
   }
+  // Right-click > Pinit > Pin to top, Pin to bottom, Move up, Move down. Falls back to
+  // plain menu items if a later Obsidian drops submenus.
   addMenuItems(menu, path) {
+    let target = menu;
+    if (typeof import_obsidian.MenuItem.prototype.setSubmenu === "function") {
+      menu.addItem((item) => {
+        target = item.setSection("action").setTitle("Pinit").setIcon("pin").setSubmenu();
+      });
+    }
+    const add = (title, icon, run) => target.addItem((item) => {
+      if (target === menu) item.setSection("action");
+      item.setTitle(title).setIcon(icon).onClick(run);
+    });
     const current = this.sideOf(path);
     for (const side of SIDES) {
       const pinned = current === side;
-      menu.addItem(
-        (item) => item.setSection("action").setTitle(pinned ? `Unpin from ${side}` : `Pin to ${side}`).setIcon(pinned ? "pin-off" : PIN_ICONS[side]).onClick(() => pinned ? this.unpin(path) : this.pin(path, side))
+      add(
+        pinned ? `Unpin from ${side}` : `Pin to ${side}`,
+        pinned ? "pin-off" : PIN_ICONS[side],
+        () => pinned ? this.unpin(path) : this.pin(path, side)
       );
     }
-    if (this.canMove(path, -1)) {
-      menu.addItem(
-        (item) => item.setSection("action").setTitle("Move up").setIcon("arrow-up").onClick(() => this.move(path, -1))
-      );
-    }
-    if (this.canMove(path, 1)) {
-      menu.addItem(
-        (item) => item.setSection("action").setTitle("Move down").setIcon("arrow-down").onClick(() => this.move(path, 1))
-      );
-    }
+    if (this.canMove(path, -1)) add("Move up", "arrow-up", () => this.move(path, -1));
+    if (this.canMove(path, 1)) add("Move down", "arrow-down", () => this.move(path, 1));
   }
   registerCommands() {
     const command = (id, name, when, run) => this.addCommand({

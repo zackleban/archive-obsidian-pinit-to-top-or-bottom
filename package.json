@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-pinit-to-top-or-bottom",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"description": "Pin to the top or the bottom. Created the bottom because it's great to get the archive out of the way.",
 	"main": "main.js",
 	"private": true,

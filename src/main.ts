@@ -1,4 +1,4 @@
-import { App, Menu, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, TFolder, View, normalizePath } from "obsidian";
+import { App, Menu, MenuItem, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, TFolder, View, normalizePath } from "obsidian";
 import { around } from "monkey-around";
 
 const FILE_EXPLORER = "file-explorer";
@@ -26,6 +26,11 @@ interface FileExplorerView extends View {
 	fileItems: Record<string, FileExplorerItem>;
 	getSortedFolderItems(folder: TFolder): FileExplorerItem[];
 	requestSort(): void;
+}
+
+// Builds Obsidian's own "Copy path" submenu; not in the public API either.
+interface SubmenuItem extends MenuItem {
+	setSubmenu(): Menu;
 }
 
 const parentOf = (path: string) => path.slice(0, Math.max(path.lastIndexOf("/"), 0));
@@ -136,28 +141,30 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		return -1;
 	}
 
+	// Right-click > Pinit > Pin to top, Pin to bottom, Move up, Move down. Falls back to
+	// plain menu items if a later Obsidian drops submenus.
 	private addMenuItems(menu: Menu, path: string) {
+		let target = menu;
+		if (typeof (MenuItem.prototype as SubmenuItem).setSubmenu === "function") {
+			menu.addItem((item) => {
+				target = (item.setSection("action").setTitle("Pinit").setIcon("pin") as SubmenuItem).setSubmenu();
+			});
+		}
+		const add = (title: string, icon: string, run: () => unknown) =>
+			target.addItem((item) => {
+				if (target === menu) item.setSection("action");
+				item.setTitle(title).setIcon(icon).onClick(run);
+			});
+
 		const current = this.sideOf(path);
 		for (const side of SIDES) {
 			const pinned = current === side;
-			menu.addItem((item) =>
-				item
-					.setSection("action")
-					.setTitle(pinned ? `Unpin from ${side}` : `Pin to ${side}`)
-					.setIcon(pinned ? "pin-off" : PIN_ICONS[side])
-					.onClick(() => (pinned ? this.unpin(path) : this.pin(path, side)))
+			add(pinned ? `Unpin from ${side}` : `Pin to ${side}`, pinned ? "pin-off" : PIN_ICONS[side], () =>
+				pinned ? this.unpin(path) : this.pin(path, side)
 			);
 		}
-		if (this.canMove(path, -1)) {
-			menu.addItem((item) =>
-				item.setSection("action").setTitle("Move up").setIcon("arrow-up").onClick(() => this.move(path, -1))
-			);
-		}
-		if (this.canMove(path, 1)) {
-			menu.addItem((item) =>
-				item.setSection("action").setTitle("Move down").setIcon("arrow-down").onClick(() => this.move(path, 1))
-			);
-		}
+		if (this.canMove(path, -1)) add("Move up", "arrow-up", () => this.move(path, -1));
+		if (this.canMove(path, 1)) add("Move down", "arrow-down", () => this.move(path, 1));
 	}
 
 	private registerCommands() {

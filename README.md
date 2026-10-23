@@ -4,8 +4,9 @@ Pin to the top or the bottom. Created the bottom because it's great to get the a
 
 ## Use
 
-- Right-click any note or folder in the file explorer and choose **Pin to top** or **Pin to bottom**.
-- A pinned item's menu shows **Unpin** for its side, the option to switch sides, and **Move up** / **Move down** when
+- Right-click any note or folder in the file explorer and open **Pinit**. It branches out, like Copy path does, to
+  **Pin to top** and **Pin to bottom**.
+- For a pinned item it shows **Unpin** for its side, the option to switch sides, and **Move up** / **Move down** when
   another pin in the same folder sits on that side.
 - Pins keep their place in their folder whatever sort order is picked, at every level of folders.
 - A new top pin goes under the existing top pins; a new bottom pin goes to the very bottom.
