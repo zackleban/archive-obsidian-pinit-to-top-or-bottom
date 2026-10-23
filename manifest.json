@@ -1,0 +1,9 @@
+{
+	"id": "pin-to-bottom",
+	"name": "Pin to Bottom",
+	"version": "1.0.0",
+	"minAppVersion": "1.6.0",
+	"description": "Pin folders to the bottom of the file explorer.",
+	"author": "Zack",
+	"isDesktopOnly": false
+}
