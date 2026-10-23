@@ -19,7 +19,8 @@ Pin to the top or the bottom. Created the bottom because it's great to get the a
 ## Coming from Pinit or Pin to Bottom
 
 The first time it runs in a vault, the plugin copies the pins from Pinit (to top) and from Pin to Bottom (to bottom).
-Turn those two plugins off afterwards, or their menu items show up twice.
+Turn those two plugins off afterwards, or their menu items show up twice. This plugin is not affiliated with Pinit by
+Habit Labs; it only reads Pinit's saved pins.
 
 ## Install by hand
 
@@ -41,3 +42,7 @@ Obsidian's file explorer sorts each folder's children with an internal method, `
 wraps it (with `monkey-around`, so other plugins that wrap it keep working), puts the top pins first and the bottom
 pins last. This is not public API: it was checked against Obsidian 1.14.5 and exists from 1.6.0. If a later Obsidian
 removes it, the plugin shows a notice and does nothing.
+
+## Licence
+
+MIT. See `LICENSE`.
