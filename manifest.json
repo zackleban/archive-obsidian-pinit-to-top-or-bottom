@@ -1,9 +1,9 @@
 {
-	"id": "pin-to-bottom",
-	"name": "Pin to Bottom",
-	"version": "1.0.0",
+	"id": "pinit-to-top-or-bottom",
+	"name": "Pinit to Top or Bottom",
+	"version": "2.0.0",
 	"minAppVersion": "1.6.0",
-	"description": "Pin folders to the bottom of the file explorer.",
+	"description": "Pin to the top or the bottom. Created the bottom because it's great to get the archive out of the way.",
 	"author": "Zack",
 	"isDesktopOnly": false
 }

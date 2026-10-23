@@ -20,7 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/main.ts
 var main_exports = {};
 __export(main_exports, {
-  default: () => PinToBottomPlugin
+  default: () => PinitToTopOrBottomPlugin
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
@@ -63,56 +63,136 @@ function around1(obj, method, createWrapper) {
 
 // src/main.ts
 var FILE_EXPLORER = "file-explorer";
-var PinToBottomPlugin = class extends import_obsidian.Plugin {
+var PINNED_CLASS = "pinit-tb-pinned";
+var SIDES = ["top", "bottom"];
+var PIN_ICONS = { top: "arrow-up-to-line", bottom: "arrow-down-to-line" };
+var parentOf = (path) => path.slice(0, Math.max(path.lastIndexOf("/"), 0));
+var isAtOrUnder = (path, base) => path === base || path.startsWith(base + "/");
+var strings = (value) => Array.isArray(value) ? value.filter((p) => typeof p === "string") : [];
+var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
-    this.settings = { pinnedPaths: [] };
+    this.settings = { top: [], bottom: [] };
     this.unpatch = null;
     this.unsupported = false;
   }
   async onload() {
     await this.loadSettings();
-    this.addSettingTab(new PinToBottomSettingTab(this.app, this));
+    this.addSettingTab(new PinitSettingTab(this.app, this));
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
-        if (!(file instanceof import_obsidian.TFolder) || file.isRoot()) return;
-        const pinned = this.isPinned(file.path);
-        menu.addItem(
-          (item) => item.setTitle(pinned ? "Unpin from bottom" : "Pin to bottom").setIcon(pinned ? "pin-off" : "pin").onClick(() => pinned ? this.unpin(file.path) : this.pin(file.path))
-        );
+        if (file instanceof import_obsidian.TFolder && file.isRoot()) return;
+        this.addMenuItems(menu, file.path);
       })
     );
-    this.registerEvent(this.app.vault.on("rename", (file, oldPath) => this.onRename(file, oldPath)));
-    this.registerEvent(this.app.vault.on("delete", (file) => this.onDelete(file)));
+    this.registerCommands();
+    this.registerEvent(this.app.vault.on("rename", (file, oldPath) => this.onRename(file.path, oldPath)));
+    this.registerEvent(this.app.vault.on("delete", (file) => this.onDelete(file.path)));
     this.app.workspace.onLayoutReady(() => {
       this.patchFileExplorer();
       this.registerEvent(this.app.workspace.on("layout-change", () => this.patchFileExplorer()));
     });
   }
   onunload() {
-    var _a;
-    (_a = this.unpatch) == null ? void 0 : _a.call(this);
+    this.unpatch?.();
     this.unpatch = null;
-    this.refreshFileExplorers();
+    this.forEachExplorer((view) => {
+      for (const item of Object.values(view.fileItems ?? {})) item.el?.removeClass(PINNED_CLASS);
+      view.requestSort();
+    });
   }
-  isPinned(path) {
-    return this.settings.pinnedPaths.includes(path);
+  sideOf(path) {
+    return SIDES.find((side) => this.settings[side].includes(path)) ?? null;
   }
-  async pin(path) {
-    this.settings.pinnedPaths = this.settings.pinnedPaths.filter((p) => p !== path).concat(path);
+  async pin(path, side) {
+    this.removePin(path);
+    this.settings[side].push(path);
     await this.saveSettings();
   }
   async unpin(path) {
-    this.settings.pinnedPaths = this.settings.pinnedPaths.filter((p) => p !== path);
+    this.removePin(path);
     await this.saveSettings();
+  }
+  // Swaps a pin with the next pin above (-1) or below (1) it in the same folder.
+  async move(path, step) {
+    const side = this.sideOf(path);
+    if (!side) return;
+    const list = this.settings[side];
+    const i = list.indexOf(path);
+    const j = this.neighbourIndex(list, i, step);
+    if (j === -1) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    await this.saveSettings();
+  }
+  canMove(path, step) {
+    const side = this.sideOf(path);
+    if (!side) return false;
+    const list = this.settings[side];
+    return this.neighbourIndex(list, list.indexOf(path), step) !== -1;
   }
   async loadSettings() {
     const data = await this.loadData();
-    this.settings = { pinnedPaths: Array.isArray(data == null ? void 0 : data.pinnedPaths) ? [...data.pinnedPaths] : [] };
+    if (data) {
+      this.settings = { top: strings(data.top), bottom: strings(data.bottom) };
+      return;
+    }
+    const pinit = await this.readPluginData("pinit");
+    const pinToBottom = await this.readPluginData("pin-to-bottom");
+    const top = Object.values(pinit?.pins ?? {}).flatMap(strings);
+    const bottom = strings(pinToBottom?.pinnedPaths).filter((p) => !top.includes(p));
+    this.settings = { top, bottom };
+    await this.saveData(this.settings);
   }
   async saveSettings() {
     await this.saveData(this.settings);
-    this.refreshFileExplorers();
+    this.forEachExplorer((view) => view.requestSort());
+  }
+  removePin(path) {
+    this.settings.top = this.settings.top.filter((p) => p !== path);
+    this.settings.bottom = this.settings.bottom.filter((p) => p !== path);
+  }
+  neighbourIndex(list, i, step) {
+    const parent = parentOf(list[i]);
+    for (let j = i + step; j >= 0 && j < list.length; j += step) {
+      if (parentOf(list[j]) === parent && this.app.vault.getAbstractFileByPath(list[j])) return j;
+    }
+    return -1;
+  }
+  addMenuItems(menu, path) {
+    const current = this.sideOf(path);
+    for (const side of SIDES) {
+      const pinned = current === side;
+      menu.addItem(
+        (item) => item.setSection("action").setTitle(pinned ? `Unpin from ${side}` : `Pin to ${side}`).setIcon(pinned ? "pin-off" : PIN_ICONS[side]).onClick(() => pinned ? this.unpin(path) : this.pin(path, side))
+      );
+    }
+    if (this.canMove(path, -1)) {
+      menu.addItem(
+        (item) => item.setSection("action").setTitle("Move up").setIcon("arrow-up").onClick(() => this.move(path, -1))
+      );
+    }
+    if (this.canMove(path, 1)) {
+      menu.addItem(
+        (item) => item.setSection("action").setTitle("Move down").setIcon("arrow-down").onClick(() => this.move(path, 1))
+      );
+    }
+  }
+  registerCommands() {
+    const command = (id, name, when, run) => this.addCommand({
+      id,
+      name,
+      checkCallback: (checking) => {
+        const path = this.app.workspace.getActiveFile()?.path;
+        if (!path || !when(path)) return false;
+        if (!checking) void run(path);
+        return true;
+      }
+    });
+    command("pin-to-top", "Pin current note to top", (p) => this.sideOf(p) !== "top", (p) => this.pin(p, "top"));
+    command("pin-to-bottom", "Pin current note to bottom", (p) => this.sideOf(p) !== "bottom", (p) => this.pin(p, "bottom"));
+    command("unpin", "Unpin current note", (p) => this.sideOf(p) !== null, (p) => this.unpin(p));
+    command("move-up", "Move current note's pin up", (p) => this.canMove(p, -1), (p) => this.move(p, -1));
+    command("move-down", "Move current note's pin down", (p) => this.canMove(p, 1), (p) => this.move(p, 1));
   }
   patchFileExplorer() {
     if (this.unpatch || this.unsupported) return;
@@ -121,54 +201,66 @@ var PinToBottomPlugin = class extends import_obsidian.Plugin {
     const proto = Object.getPrototypeOf(leaf.view);
     if (typeof proto.getSortedFolderItems !== "function") {
       this.unsupported = true;
-      new import_obsidian.Notice("Pin to Bottom: this version of Obsidian's file explorer is not supported.");
+      new import_obsidian.Notice("Pinit to Top or Bottom: this version of Obsidian's file explorer is not supported.");
       return;
     }
     const plugin = this;
     this.unpatch = around(proto, {
       getSortedFolderItems(original) {
         return function(folder) {
-          return plugin.movePinnedDown(original.call(this, folder));
+          return plugin.arrange(original.call(this, folder));
         };
       }
     });
-    this.refreshFileExplorers();
+    this.forEachExplorer((view) => view.requestSort());
   }
-  movePinnedDown(items) {
-    const pinned = this.settings.pinnedPaths;
-    if (pinned.length === 0) return items;
-    const rest = items.filter((item) => !pinned.includes(item.file.path));
-    if (rest.length === items.length) return items;
-    const bottom = items.filter((item) => pinned.includes(item.file.path)).sort((a, b) => pinned.indexOf(a.file.path) - pinned.indexOf(b.file.path));
-    return rest.concat(bottom);
+  arrange(items) {
+    const byPath = new Map(items.map((item) => [item.file.path, item]));
+    const pick = (paths) => paths.map((p) => byPath.get(p)).filter((item) => item !== void 0);
+    const top = pick(this.settings.top);
+    const bottom = pick(this.settings.bottom);
+    const pinned = /* @__PURE__ */ new Set([...top, ...bottom]);
+    for (const item of items) item.el?.toggleClass(PINNED_CLASS, pinned.has(item));
+    if (pinned.size === 0) return items;
+    return [...top, ...items.filter((item) => !pinned.has(item)), ...bottom];
   }
-  refreshFileExplorers() {
-    var _a, _b;
+  forEachExplorer(callback) {
     for (const leaf of this.app.workspace.getLeavesOfType(FILE_EXPLORER)) {
       if (leaf.isDeferred) continue;
-      (_b = (_a = leaf.view).requestSort) == null ? void 0 : _b.call(_a);
+      const view = leaf.view;
+      if (typeof view.requestSort === "function") callback(view);
     }
   }
-  // Renaming or moving a folder (or any folder above it) keeps its pin.
-  onRename(file, oldPath) {
-    if (!(file instanceof import_obsidian.TFolder)) return;
+  async readPluginData(id) {
+    try {
+      const path = (0, import_obsidian.normalizePath)(`${this.app.vault.configDir}/plugins/${id}/data.json`);
+      return JSON.parse(await this.app.vault.adapter.read(path));
+    } catch {
+      return null;
+    }
+  }
+  // Renaming or moving a pinned item (or any folder above it) keeps its pin.
+  onRename(path, oldPath) {
     let changed = false;
-    this.settings.pinnedPaths = this.settings.pinnedPaths.map((path) => {
-      if (path !== oldPath && !path.startsWith(oldPath + "/")) return path;
+    const follow = (p) => {
+      if (!isAtOrUnder(p, oldPath)) return p;
       changed = true;
-      return file.path + path.slice(oldPath.length);
-    });
+      return path + p.slice(oldPath.length);
+    };
+    this.settings.top = this.settings.top.map(follow);
+    this.settings.bottom = this.settings.bottom.map(follow);
     if (changed) void this.saveSettings();
   }
-  onDelete(file) {
-    if (!(file instanceof import_obsidian.TFolder)) return;
-    const kept = this.settings.pinnedPaths.filter((path) => path !== file.path && !path.startsWith(file.path + "/"));
-    if (kept.length === this.settings.pinnedPaths.length) return;
-    this.settings.pinnedPaths = kept;
+  onDelete(path) {
+    const keep = (p) => !isAtOrUnder(p, path);
+    const top = this.settings.top.filter(keep);
+    const bottom = this.settings.bottom.filter(keep);
+    if (top.length === this.settings.top.length && bottom.length === this.settings.bottom.length) return;
+    this.settings = { top, bottom };
     void this.saveSettings();
   }
 };
-var PinToBottomSettingTab = class extends import_obsidian.PluginSettingTab {
+var PinitSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -176,17 +268,21 @@ var PinToBottomSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    const pinned = this.plugin.settings.pinnedPaths;
-    if (pinned.length === 0) {
-      containerEl.createEl("p", {
-        cls: "setting-item-description",
-        text: 'No folders are pinned. Right-click a folder in the file explorer and choose "Pin to bottom".'
-      });
+    containerEl.createEl("p", {
+      cls: "setting-item-description",
+      text: "Right-click any note or folder in the file explorer to pin it to the top or the bottom of its folder. Pins in the same folder show in the order listed here; use Move up and Move down on the right-click menu to change it."
+    });
+    this.section("Pinned to top", this.plugin.settings.top);
+    this.section("Pinned to bottom", this.plugin.settings.bottom);
+  }
+  section(name, paths) {
+    new import_obsidian.Setting(this.containerEl).setName(name).setHeading();
+    if (paths.length === 0) {
+      this.containerEl.createEl("p", { cls: "setting-item-description", text: "Nothing pinned." });
       return;
     }
-    new import_obsidian.Setting(containerEl).setName("Pinned folders").setDesc("Pinned folders that share a parent keep this order, the last one lowest.").setHeading();
-    for (const path of pinned) {
-      new import_obsidian.Setting(containerEl).setName(path).addButton(
+    for (const path of paths) {
+      new import_obsidian.Setting(this.containerEl).setName(path).addButton(
         (button) => button.setButtonText("Unpin").onClick(async () => {
           await this.plugin.unpin(path);
           this.display();
