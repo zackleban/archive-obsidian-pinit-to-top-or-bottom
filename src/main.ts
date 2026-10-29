@@ -14,7 +14,8 @@ interface PinitSettings {
 	bottom: string[];
 }
 
-// Obsidian's file explorer internals; not in the public API (checked against 1.14.5).
+// Obsidian's file explorer internals; not in the public API.
+// Live compatibility remains open in docs/REVIEW.md.
 // Each folder's children are sorted by getSortedFolderItems, so wrapping it places
 // pinned items at every level, after whatever sort order the user picked.
 interface FileExplorerItem {
