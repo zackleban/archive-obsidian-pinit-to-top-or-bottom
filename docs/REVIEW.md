@@ -1,6 +1,6 @@
 # Local review checklist
 
-Latest local checkpoint: [Confirmation and ownership REVIEW — 2026-10-29](#confirmation-and-ownership-review--2026-10-29). Earlier entries below remain dated history.
+Latest local checkpoint: [Content and saved ordering REVIEW — 2026-10-29](#content-and-saved-ordering-review--2026-10-29). Earlier entries below remain dated history.
 
 Prepared on 2026-10-28. Nothing was submitted, tagged, pushed, or released.
 
@@ -110,3 +110,19 @@ Fresh `npm run qa` passed **16/16 tests**, TypeScript, production build and pack
 README installation/development instructions, manifest/package/lock/root-lock/version agreement, desktop flags, dependency classification, licenses/notices and assets were checked against source/build configuration. Current official [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin%20guidelines), [developer policies](https://docs.obsidian.md/community-directory/developer-policies), [submission requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [manifest](https://docs.obsidian.md/Reference/Manifest) and [submission instructions](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin) were rechecked. Local consistency does not establish minimum-version compatibility, directory availability, hosted-review success or community approval.
 
 Production assets are byte-identical to this REVIEW's starting candidate. Diff checks pass. Existing readiness/live protocols remain their sole homes, including explorer/modal/WebGL/xterm, popout, mobile where advertised, Linux and minimum versions as applicable. The three older live sorting/recovery deliverables remain blocked. No app-access retry, personal-vault installation, push, tag, release or submission occurred.
+
+## Content and saved ordering REVIEW — 2026-10-29
+
+agent decision 2026-10-28: accept the bounded local REVIEW only after independent read-only contract review, final verification and local commits; preserve live gates because local evidence cannot establish them.
+
+Reviewed active lifecycle, top-wins rename normalization, unique sorting output and both installed monkey-around 3.0.0 wrapper teardown orders. No new implementation defect found. File Placer's accepted source-relative collision policy differs intentionally from pin first-occurrence/top-wins policy. Each retains its documented behavior.
+
+The sole shared suite in sibling File Placer now freshly passes **28/28** via `npm run test:integration`, covering File Placer's own stale destinations in both positions as well as retained Pinit collisions, both load/handler orders and either plugin reload. No duplicate integration suite or runtime record was created. [The shared sorting protocol](../../obsidian-file-placer/docs/RUNTIME-SORTING.md) retains blocked live checks. Cloned saved-state and host doubles do not establish real explorer event ordering or filesystem persistence.
+
+Fresh `npm run qa`: **16/16 tests**, zero-warning lint, TypeScript, production build and package checks, exit 0. Production assets rebuild byte-identically to this REVIEW’s starting candidate, with an independent in-memory comparison against actual production build options.
+
+README install/build instructions, manifest/package/lock/root-lock/version-map agreement, desktop flags, runtime/development dependency classification, licenses/notices and production assets were checked against the existing locked toolchain. Node 24.22.0, npm 11.19.1; no installation or dependency update. Each QA command ran once; all seven total **746 standalone tests plus the sole 28-case shared integration suite**. The historical 734-test intake arithmetic is not a fresh pass; twelve new graph gesture cases explain the difference.
+
+Current official [plugin guidelines](https://raw.githubusercontent.com/obsidianmd/obsidian-developer-docs/main/en/Plugins/Releasing/Plugin%20guidelines.md), [developer policies](https://docs.obsidian.md/community-directory/developer-policies), [submission requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [manifest](https://raw.githubusercontent.com/obsidianmd/obsidian-developer-docs/main/en/Reference/Manifest.md) and [submission instructions](https://raw.githubusercontent.com/obsidianmd/obsidian-developer-docs/main/en/Plugins/Releasing/Submit%20your%20plugin.md) were rechecked. Local metadata/artifact/disclosure consistency is not blanket compliance, minimum-version compatibility, hosted-review success, name/ID availability or community approval.
+
+Existing explorer/modal/WebGL/xterm, popout, mobile where advertised, Linux and minimum/current-version gates remain open as applicable. The three older live sorting/recovery deliverables remain blocked in their original records. No blocked app-access attempt, personal-vault installation, push, tag, release or submission occurred. Working/staged/committed diff checks are part of final acceptance; commits remain local on `agent/2026-10-28`.
