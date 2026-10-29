@@ -1,5 +1,7 @@
 # Local review checklist
 
+Latest local checkpoint: [Four-fix quality REVIEW — 2026-10-29](#four-fix-quality-review--2026-10-29). Earlier entries below remain dated history.
+
 Prepared on 2026-10-28. Nothing was submitted, tagged, pushed, or released.
 
 ## Automated checks
@@ -84,3 +86,15 @@ Fresh `npm run qa` passes **16/16 tests**, zero-warning lint, TypeScript, produc
 These are explorer/storage doubles, not full host lifecycle dispatch or filesystem durability. The existing shared [runtime record](../../obsidian-file-placer/docs/RUNTIME-SORTING.md) remains the sole live sorting protocol; mobile/popout/minimum-version gates stay open.
 
 Rechecked current official manifest, submission requirements, developer policies, plugin guidelines and submission instructions linked in this record. Local metadata, licensing and automated checks do not establish directory availability, minimum-version runtime compatibility or community approval. Production assets match the reviewed source and remain byte-identical to this review's starting candidate; `git diff --check` passes. No tests were added because no new implementation defect was reproduced. No app-access retry, installation, push, tag, release or submission occurred.
+
+## Four-fix quality REVIEW — 2026-10-29
+
+agent decision 2026-10-28: accept this bounded local REVIEW only after independent source/contract review and fresh checks; preserve live/community gates because synthetic hosts and local packaging cannot establish them.
+
+Reviewed active-pin lifecycle, normalization, exact sorting identities and installed monkey-around removal semantics with File Placer. No new defect found. A fresh npm run test:integration in sibling File Placer passes 12/12; this remains the sole shared suite. Source/assets unchanged; live sorting, mobile, popout and minimum-version gates remain open.
+
+Fresh `npm run qa` passed **16/16 tests**, TypeScript, production build and package checks. Configured official lint passed with zero warnings. This QA ran once for this REVIEW; standalone results across all seven are **382 tests**, plus **12 shared cases**. The preceding 365-plus-12 figure was an arithmetic intake expectation; the 17 new graph cases account for the difference.
+
+README installation/development requirements, manifest/package/lock/root-lock/version-map agreement, licenses/notices, dependency classification and production artifacts were checked against actual configuration. Current official [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin%20guidelines), [developer policies](https://docs.obsidian.md/community-directory/developer-policies), [submission requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [manifest schema](https://docs.obsidian.md/Reference/Manifest) and [submission instructions](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin) were rechecked. Declared minimums remain unverified runtime gates; local consistency is not hosted-scanner or community approval.
+
+Existing live checklists and recovery protocols above remain their sole homes; no app-access retry, personal-vault installation, push, tag, release or submission occurred. Production assets are byte-identical to the starting candidate.
