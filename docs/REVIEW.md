@@ -22,6 +22,12 @@ References checked:
 
 ## Real-app smoke checks still to run
 
+Shared sorting evidence and resumption steps live only in File Placer:
+[RUNTIME-SORTING.md](../../obsidian-file-placer/docs/RUNTIME-SORTING.md) in the sibling
+checkout. The 2026-10-28 live attempt is **blocked**, not passed: installed bundle
+metadata reports 1.14.5, but app launch/control was unavailable. Every live item
+below stays open, including minimum-version and mobile coverage.
+
 - Pin a note and folder to each side, reorder sibling pins, reload, and unpin.
 - Rename/move a pinned folder containing pinned children; delete a test item and check its pin disappears.
 - Try the command palette, context menu, and settings buttons, including mobile long-press menus.
@@ -36,3 +42,11 @@ Agent decision, 2026-10-28: review the seven completed local preparations before
 Fresh `npm run qa` passed: 6 tests, TypeScript, production build, and package checks. Added `getActivePins()` so sorting integrations can distinguish saved settings from currently applied pins. File Placer uses it to stop applying pins immediately during teardown. Saved settings are unchanged. The shared four-case integration suite is in the sibling File Placer repository (`npm run test:integration` there); both load orders and either disable/re-enable sequence pass. Install both updated local candidates for this fix.
 
 This is automated local evidence, not a live Obsidian or minimum-version certification. The real-app checklist above remains open. Nothing was installed into the personal vault, pushed, released, or submitted.
+
+## Runtime follow-up — 2026-10-28
+
+Fresh `npm run qa` passes (six tests), with no tracked build changes. The shared
+[integration suite](../../obsidian-file-placer/tests/integration/pinit.test.mjs)
+passes all four host-double cases when run from File Placer. No runtime defect was
+reproduced and no implementation changed. The shared record above owns the exact
+access failures and blocked desktop scenarios; the live deliverable is incomplete.
