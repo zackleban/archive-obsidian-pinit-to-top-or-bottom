@@ -1,6 +1,6 @@
 # Local review checklist
 
-Latest local checkpoint: [Four-fix quality REVIEW — 2026-10-29](#four-fix-quality-review--2026-10-29). Earlier entries below remain dated history.
+Latest local checkpoint: [Confirmation and ownership REVIEW — 2026-10-29](#confirmation-and-ownership-review--2026-10-29). Earlier entries below remain dated history.
 
 Prepared on 2026-10-28. Nothing was submitted, tagged, pushed, or released.
 
@@ -98,3 +98,15 @@ Fresh `npm run qa` passed **16/16 tests**, TypeScript, production build and pack
 README installation/development requirements, manifest/package/lock/root-lock/version-map agreement, licenses/notices, dependency classification and production artifacts were checked against actual configuration. Current official [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin%20guidelines), [developer policies](https://docs.obsidian.md/community-directory/developer-policies), [submission requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [manifest schema](https://docs.obsidian.md/Reference/Manifest) and [submission instructions](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin) were rechecked. Declared minimums remain unverified runtime gates; local consistency is not hosted-scanner or community approval.
 
 Existing live checklists and recovery protocols above remain their sole homes; no app-access retry, personal-vault installation, push, tag, release or submission occurred. Production assets are byte-identical to the starting candidate.
+
+## Confirmation and ownership REVIEW — 2026-10-29
+
+agent decision 2026-10-28: accept only the bounded local REVIEW after independent source/contract review, fresh checks and local commits; keep existing live/community gates open because local evidence cannot establish them.
+
+Independent read-only review retained `8d53743` active lifecycle, rename normalization and sorting identities. Installed monkey-around 3.0.0 supports either teardown order by delegating removed buried wrappers to their original implementation. No new defect found. The sole shared suite ran in sibling File Placer: **12/12** cases pass against this unchanged Pinit implementation. Synthetic wrapper/host evidence does not certify live explorer, popout, mobile or minimum-version behavior.
+
+Fresh `npm run qa` passed **16/16 tests**, TypeScript, production build and package checks. Configured lint passed with zero warnings. Each of the seven QA commands ran once for this REVIEW; the fresh aggregate is **543 standalone tests plus 12 shared cases**. Five new graph cases account for the increase from the historical 538-plus-12 intake arithmetic. No final QA failed.
+
+README installation/development instructions, manifest/package/lock/root-lock/version agreement, desktop flags, dependency classification, licenses/notices and assets were checked against source/build configuration. Current official [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin%20guidelines), [developer policies](https://docs.obsidian.md/community-directory/developer-policies), [submission requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [manifest](https://docs.obsidian.md/Reference/Manifest) and [submission instructions](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin) were rechecked. Local consistency does not establish minimum-version compatibility, directory availability, hosted-review success or community approval.
+
+Production assets are byte-identical to this REVIEW's starting candidate. Diff checks pass. Existing readiness/live protocols remain their sole homes, including explorer/modal/WebGL/xterm, popout, mobile where advertised, Linux and minimum versions as applicable. The three older live sorting/recovery deliverables remain blocked. No app-access retry, personal-vault installation, push, tag, release or submission occurred.
