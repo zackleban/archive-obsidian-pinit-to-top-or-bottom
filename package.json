@@ -1,19 +1,25 @@
 {
 	"name": "obsidian-pinit-to-top-or-bottom",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"description": "Pin to the top or the bottom. Created the bottom because it's great to get the archive out of the way.",
 	"main": "main.js",
 	"private": true,
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
+		"lint": "eslint src package.json --max-warnings 0",
+		"test": "node --test tests/*.test.mjs",
+		"qa": "npm run lint && npm test && npm run build && node scripts/check-package.mjs"
 	},
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"esbuild": "0.28.2",
+		"eslint": "^10.13.0",
+		"eslint-plugin-obsidianmd": "^0.4.2",
 		"obsidian": "1.14.4",
-		"typescript": "~5.9.0"
+		"typescript": "~5.9.0",
+		"typescript-eslint": "^8.72.1"
 	},
 	"dependencies": {
 		"monkey-around": "^3.0.0"

@@ -36,12 +36,13 @@ interface SubmenuItem extends MenuItem {
 const parentOf = (path: string) => path.slice(0, Math.max(path.lastIndexOf("/"), 0));
 const isAtOrUnder = (path: string, base: string) => path === base || path.startsWith(base + "/");
 const strings = (value: unknown): string[] =>
-	Array.isArray(value) ? value.filter((p): p is string => typeof p === "string") : [];
+	Array.isArray(value) ? [...new Set(value.filter((p): p is string => typeof p === "string" && p.length > 0 && p !== "/"))] : [];
 
 export default class PinitToTopOrBottomPlugin extends Plugin {
 	settings: PinitSettings = { top: [], bottom: [] };
 	private unpatch: (() => void) | null = null;
 	private unsupported = false;
+	private unloaded = false;
 
 	async onload() {
 		await this.loadSettings();
@@ -59,6 +60,7 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		this.registerEvent(this.app.vault.on("delete", (file) => this.onDelete(file.path)));
 
 		this.app.workspace.onLayoutReady(() => {
+			if (this.unloaded) return;
 			this.patchFileExplorer();
 			// The file explorer can load later (a deferred sidebar tab, or re-enabled core plugin).
 			this.registerEvent(this.app.workspace.on("layout-change", () => this.patchFileExplorer()));
@@ -66,6 +68,7 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 	}
 
 	onunload() {
+		this.unloaded = true;
 		this.unpatch?.();
 		this.unpatch = null;
 		this.forEachExplorer((view) => {
@@ -81,12 +84,12 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 	async pin(path: string, side: Side) {
 		this.removePin(path);
 		this.settings[side].push(path);
-		await this.saveSettings();
+		await this.saveSafely();
 	}
 
 	async unpin(path: string) {
 		this.removePin(path);
-		await this.saveSettings();
+		await this.saveSafely();
 	}
 
 	// Swaps a pin with the next pin above (-1) or below (1) it in the same folder.
@@ -98,7 +101,7 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		const j = this.neighbourIndex(list, i, step);
 		if (j === -1) return;
 		[list[i], list[j]] = [list[j], list[i]];
-		await this.saveSettings();
+		await this.saveSafely();
 	}
 
 	canMove(path: string, step: -1 | 1): boolean {
@@ -111,13 +114,14 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 	async loadSettings() {
 		const data = (await this.loadData()) as Partial<PinitSettings> | null;
 		if (data) {
-			this.settings = { top: strings(data.top), bottom: strings(data.bottom) };
+			const top = strings(data.top);
+			this.settings = { top, bottom: strings(data.bottom).filter((path) => !top.includes(path)) };
 			return;
 		}
 		// First run: bring over the pins from Pinit (top) and Pin to Bottom (bottom).
 		const pinit = (await this.readPluginData("pinit")) as { pins?: Record<string, unknown> } | null;
 		const pinToBottom = (await this.readPluginData("pin-to-bottom")) as { pinnedPaths?: unknown } | null;
-		const top = Object.values(pinit?.pins ?? {}).flatMap(strings);
+		const top = strings(Object.values(pinit?.pins ?? {}).flatMap(strings));
 		const bottom = strings(pinToBottom?.pinnedPaths).filter((p) => !top.includes(p));
 		this.settings = { top, bottom };
 		await this.saveData(this.settings);
@@ -126,6 +130,14 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.forEachExplorer((view) => view.requestSort());
+	}
+
+	private async saveSafely() {
+		try { await this.saveSettings(); }
+		catch (error) {
+			console.error("Pinit: could not save pins", error);
+			new Notice("Could not save pins. Check that the vault is writable.");
+		}
 	}
 
 	private removePin(path: string) {
@@ -187,22 +199,23 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 	}
 
 	private patchFileExplorer() {
+		if (this.unloaded) return;
 		if (this.unpatch || this.unsupported) return;
 		const leaf = this.app.workspace.getLeavesOfType(FILE_EXPLORER).find((l) => !l.isDeferred);
 		if (!leaf) return;
 
 		const proto = Object.getPrototypeOf(leaf.view) as FileExplorerView;
-		if (typeof proto.getSortedFolderItems !== "function") {
+		if (typeof proto.getSortedFolderItems !== "function" || typeof proto.requestSort !== "function") {
 			this.unsupported = true;
 			new Notice("Pinit to Top or Bottom: this version of Obsidian's file explorer is not supported.");
 			return;
 		}
 
-		const plugin = this;
+		const arrangeItems = this.arrange.bind(this);
 		this.unpatch = around(proto, {
 			getSortedFolderItems(original) {
 				return function (this: FileExplorerView, folder: TFolder) {
-					return plugin.arrange(original.call(this, folder));
+					return arrangeItems(original.call(this, folder));
 				};
 			},
 		});
@@ -214,7 +227,7 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		const pick = (paths: string[]) =>
 			paths.map((p) => byPath.get(p)).filter((item): item is FileExplorerItem => item !== undefined);
 		const top = pick(this.settings.top);
-		const bottom = pick(this.settings.bottom);
+		const bottom = pick(this.settings.bottom).filter((item) => !top.includes(item));
 		const pinned = new Set([...top, ...bottom]);
 		for (const item of items) item.el?.toggleClass(PINNED_CLASS, pinned.has(item));
 		if (pinned.size === 0) return items;
@@ -248,7 +261,7 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		};
 		this.settings.top = this.settings.top.map(follow);
 		this.settings.bottom = this.settings.bottom.map(follow);
-		if (changed) void this.saveSettings();
+		if (changed) void this.saveSafely();
 	}
 
 	private onDelete(path: string) {
@@ -257,7 +270,7 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		const bottom = this.settings.bottom.filter(keep);
 		if (top.length === this.settings.top.length && bottom.length === this.settings.bottom.length) return;
 		this.settings = { top, bottom };
-		void this.saveSettings();
+		void this.saveSafely();
 	}
 }
 
@@ -267,6 +280,10 @@ class PinitSettingTab extends PluginSettingTab {
 	}
 
 	display() {
+		this.renderSettings();
+	}
+
+	private renderSettings() {
 		const { containerEl } = this;
 		containerEl.empty();
 		containerEl.createEl("p", {
@@ -289,7 +306,7 @@ class PinitSettingTab extends PluginSettingTab {
 			new Setting(this.containerEl).setName(path).addButton((button) =>
 				button.setButtonText("Unpin").onClick(async () => {
 					await this.plugin.unpin(path);
-					this.display();
+					this.renderSettings();
 				})
 			);
 		}

@@ -1,8 +1,8 @@
 {
 	"id": "pinit-to-top-or-bottom",
 	"name": "Pinit to Top or Bottom",
-	"version": "2.1.0",
-	"minAppVersion": "1.6.0",
+	"version": "2.1.1",
+	"minAppVersion": "1.7.2",
 	"description": "Pin to the top or the bottom. Created the bottom because it's great to get the archive out of the way.",
 	"author": "Zack",
 	"isDesktopOnly": false
