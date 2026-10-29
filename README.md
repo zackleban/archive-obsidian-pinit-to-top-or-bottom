@@ -1,48 +1,51 @@
 # Pinit to Top or Bottom
 
-Pin to the top or the bottom. Created the bottom because it's great to get the archive out of the way.
+Keep important notes and folders at the top of their folder and archives at the bottom. Reorder pins without renaming or moving your files.
+
+## Requirements and installation
+
+Requires Obsidian **1.7.2 or newer** and the core **Files** plugin. The plugin uses portable Obsidian APIs; real-device mobile checks are still listed in [docs/REVIEW.md](docs/REVIEW.md).
+
+This is a local submission candidate, not a published community release. To install in a test vault:
+
+1. Run `npm ci` and `npm run qa` in this repository (Node.js 22.13+ or 24 recommended for development).
+2. Create `<vault>/<config-dir>/plugins/pinit-to-top-or-bottom/`. The config directory is normally `.obsidian`.
+3. Copy `main.js`, `manifest.json`, and `styles.css` into it.
+4. Reload Obsidian and enable **Pinit to Top or Bottom** under **Settings → Community plugins**.
 
 ## Use
 
-- Right-click any note or folder in the file explorer and open **Pinit**. It branches out, like Copy path does, to
-  **Pin to top** and **Pin to bottom**.
-- For a pinned item it shows **Unpin** for its side, the option to switch sides, and **Move up** / **Move down** when
-  another pin in the same folder sits on that side.
-- Pins keep their place in their folder whatever sort order is picked, at every level of folders.
-- A new top pin goes under the existing top pins; a new bottom pin goes to the very bottom.
-- Pinned items show a small pin before their name.
-- Commands for the open note: Pin current note to top, Pin current note to bottom, Unpin current note, Move current
-  note's pin up, Move current note's pin down.
-- Pins follow an item when it or a folder above it is renamed or moved inside Obsidian. Deleting it drops its pin.
-- Settings, Pinit to Top or Bottom lists every pin, with an Unpin button for each.
+- Open a note or folder's context menu in the file explorer, then **Pinit → Pin to top** or **Pin to bottom**. If submenus are unavailable, these actions appear directly in the menu.
+- New top pins follow existing top pins. New bottom pins go below existing bottom pins.
+- Use **Move up** and **Move down** to reorder pins on the same side in the same folder.
+- Choose **Unpin from top/bottom** to return an item to normal sorting. Switching sides removes its previous pin.
+- Pins show a small pin beside their name and follow notes and folders renamed or moved within Obsidian. Deleting an item removes its pin.
+- The plugin settings list every pin with an **Unpin** button.
 
-## Coming from Pinit or Pin to Bottom
+The command palette also offers **Pin current note to top**, **Pin current note to bottom**, **Unpin current note**, **Move current note's pin up**, and **Move current note's pin down**. Commands appear only when applicable. No hotkeys are assigned automatically.
 
-The first time it runs in a vault, the plugin copies the pins from Pinit (to top) and from Pin to Bottom (to bottom).
-Turn those two plugins off afterwards, or their menu items show up twice. This plugin is not affiliated with Pinit by
-Habit Labs; it only reads Pinit's saved pins.
+Pins work at every folder depth and override the file explorer's normal sort. Unpinned items retain that normal ordering. File Placer respects these pins.
 
-## Install by hand
+## Import existing pins
 
-Copy `main.js`, `manifest.json` and `styles.css` into `<your vault>/.obsidian/plugins/pinit-to-top-or-bottom/`, then
-turn it on under Settings, Community plugins.
+On the first run only, the plugin reads saved pins from **Pinit** and **Pin to Bottom** in the vault's configured plugin directory. Top wins when an item appears on both sides, and duplicates are removed. Missing source settings are ignored. Disable the older plugins to avoid competing sorts and duplicate menu items.
 
-## Build
+This plugin is independent of Pinit by Habit Labs. It does not modify those plugins' settings.
 
-```
-npm install
-npm run build
-```
+## Data and privacy
 
-`npm run dev` rebuilds on every save.
+Pins are stored in this plugin's `data.json`. No note contents are edited. No accounts, network calls, telemetry, or paid services are used. Disabling the plugin removes pin styling and restores normal sorting; saved pins remain for the next enable.
 
-## How it works
+## Development and review
 
-Obsidian's file explorer sorts each folder's children with an internal method, `getSortedFolderItems`. The plugin
-wraps it (with `monkey-around`, so other plugins that wrap it keep working), puts the top pins first and the bottom
-pins last. This is not public API: it was checked against Obsidian 1.14.5 and exists from 1.6.0. If a later Obsidian
-removes it, the plugin shows a notice and does nothing.
+- `npm run dev`: rebuild while editing.
+- `npm run lint`: official Obsidian ESLint rules and TypeScript-aware checks.
+- `npm test`: duplicate/conflicting pins, sibling ordering, renames, deletion, migration, and unload regressions.
+- `npm run build`: strict TypeScript check and production bundle.
+- `npm run qa`: all checks plus manifest/package/version and artifact validation.
 
-## Licence
+Sorting wraps the internal `getSortedFolderItems` method with monkey-around. The wrapper is removed on unload, and unsupported explorer APIs produce a notice. Public API usage is checked against the declared minimum version; the real-app compatibility checklist is in [docs/REVIEW.md](docs/REVIEW.md). Other file-explorer sorting plugins may conflict.
 
-MIT. See `LICENSE`.
+## License
+
+MIT; see [LICENSE](LICENSE). Bundled monkey-around is ISC; its attribution and terms are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and embedded in `main.js`.
