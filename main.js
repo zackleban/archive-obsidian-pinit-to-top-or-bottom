@@ -94,6 +94,10 @@ var PIN_ICONS = { top: "arrow-up-to-line", bottom: "arrow-down-to-line" };
 var parentOf = (path) => path.slice(0, Math.max(path.lastIndexOf("/"), 0));
 var isAtOrUnder = (path, base) => path === base || path.startsWith(base + "/");
 var strings = (value) => Array.isArray(value) ? [...new Set(value.filter((p) => typeof p === "string" && p.length > 0 && p !== "/"))] : [];
+var normalizePins = (topPaths, bottomPaths) => {
+  const top = strings(topPaths);
+  return { top, bottom: strings(bottomPaths).filter((path) => !top.includes(path)) };
+};
 var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
@@ -166,15 +170,12 @@ var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
   async loadSettings() {
     const data = await this.loadData();
     if (data) {
-      const top2 = strings(data.top);
-      this.settings = { top: top2, bottom: strings(data.bottom).filter((path) => !top2.includes(path)) };
+      this.settings = normalizePins(data.top, data.bottom);
       return;
     }
     const pinit = await this.readPluginData("pinit");
     const pinToBottom = await this.readPluginData("pin-to-bottom");
-    const top = strings(Object.values(pinit?.pins ?? {}).flatMap(strings));
-    const bottom = strings(pinToBottom?.pinnedPaths).filter((p) => !top.includes(p));
-    this.settings = { top, bottom };
+    this.settings = normalizePins(Object.values(pinit?.pins ?? {}).flatMap(strings), pinToBottom?.pinnedPaths);
     await this.saveData(this.settings);
   }
   async saveSettings() {
@@ -265,9 +266,13 @@ var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
   }
   arrange(items) {
     const byPath = new Map(items.map((item) => [item.file.path, item]));
-    const pick = (paths) => paths.map((p) => byPath.get(p)).filter((item) => item !== void 0);
+    const pick = (paths) => paths.flatMap((path) => {
+      const item = byPath.get(path);
+      byPath.delete(path);
+      return item ? [item] : [];
+    });
     const top = pick(this.settings.top);
-    const bottom = pick(this.settings.bottom).filter((item) => !top.includes(item));
+    const bottom = pick(this.settings.bottom);
     const pinned = /* @__PURE__ */ new Set([...top, ...bottom]);
     for (const item of items) item.el?.toggleClass(PINNED_CLASS, pinned.has(item));
     if (pinned.size === 0) return items;
@@ -296,9 +301,12 @@ var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
       changed = true;
       return path + p.slice(oldPath.length);
     };
-    this.settings.top = this.settings.top.map(follow);
-    this.settings.bottom = this.settings.bottom.map(follow);
-    if (changed) void this.saveSafely();
+    const top = this.settings.top.map(follow);
+    const bottom = this.settings.bottom.map(follow);
+    if (changed) {
+      this.settings = normalizePins(top, bottom);
+      void this.saveSafely();
+    }
   }
   onDelete(path) {
     const keep = (p) => !isAtOrUnder(p, path);

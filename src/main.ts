@@ -37,6 +37,10 @@ const parentOf = (path: string) => path.slice(0, Math.max(path.lastIndexOf("/"),
 const isAtOrUnder = (path: string, base: string) => path === base || path.startsWith(base + "/");
 const strings = (value: unknown): string[] =>
 	Array.isArray(value) ? [...new Set(value.filter((p): p is string => typeof p === "string" && p.length > 0 && p !== "/"))] : [];
+const normalizePins = (topPaths: unknown, bottomPaths: unknown): PinitSettings => {
+	const top = strings(topPaths);
+	return { top, bottom: strings(bottomPaths).filter((path) => !top.includes(path)) };
+};
 
 export default class PinitToTopOrBottomPlugin extends Plugin {
 	settings: PinitSettings = { top: [], bottom: [] };
@@ -120,16 +124,13 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 	async loadSettings() {
 		const data = (await this.loadData()) as Partial<PinitSettings> | null;
 		if (data) {
-			const top = strings(data.top);
-			this.settings = { top, bottom: strings(data.bottom).filter((path) => !top.includes(path)) };
+			this.settings = normalizePins(data.top, data.bottom);
 			return;
 		}
 		// First run: bring over the pins from Pinit (top) and Pin to Bottom (bottom).
 		const pinit = (await this.readPluginData("pinit")) as { pins?: Record<string, unknown> } | null;
 		const pinToBottom = (await this.readPluginData("pin-to-bottom")) as { pinnedPaths?: unknown } | null;
-		const top = strings(Object.values(pinit?.pins ?? {}).flatMap(strings));
-		const bottom = strings(pinToBottom?.pinnedPaths).filter((p) => !top.includes(p));
-		this.settings = { top, bottom };
+		this.settings = normalizePins(Object.values(pinit?.pins ?? {}).flatMap(strings), pinToBottom?.pinnedPaths);
 		await this.saveData(this.settings);
 	}
 
@@ -230,10 +231,14 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 
 	private arrange(items: FileExplorerItem[]): FileExplorerItem[] {
 		const byPath = new Map(items.map((item) => [item.file.path, item]));
-		const pick = (paths: string[]) =>
-			paths.map((p) => byPath.get(p)).filter((item): item is FileExplorerItem => item !== undefined);
+		// Consume each match once, even if saved pins contain duplicates or conflicts.
+		const pick = (paths: string[]) => paths.flatMap((path) => {
+			const item = byPath.get(path);
+			byPath.delete(path);
+			return item ? [item] : [];
+		});
 		const top = pick(this.settings.top);
-		const bottom = pick(this.settings.bottom).filter((item) => !top.includes(item));
+		const bottom = pick(this.settings.bottom);
 		const pinned = new Set([...top, ...bottom]);
 		for (const item of items) item.el?.toggleClass(PINNED_CLASS, pinned.has(item));
 		if (pinned.size === 0) return items;
@@ -265,9 +270,14 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 			changed = true;
 			return path + p.slice(oldPath.length);
 		};
-		this.settings.top = this.settings.top.map(follow);
-		this.settings.bottom = this.settings.bottom.map(follow);
-		if (changed) void this.saveSafely();
+		const top = this.settings.top.map(follow);
+		const bottom = this.settings.bottom.map(follow);
+		if (changed) {
+			// A stale destination pin can collide with a renamed path. Keep the first
+			// occurrence on each side, with top winning, just as when loading pins.
+			this.settings = normalizePins(top, bottom);
+			void this.saveSafely();
+		}
 	}
 
 	private onDelete(path: string) {

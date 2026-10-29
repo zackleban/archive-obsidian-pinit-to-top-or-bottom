@@ -62,3 +62,13 @@ Shared integration still uses an explorer double, not a running app. The [existi
 `git diff --check` passes. Nothing was pushed, tagged, released or submitted.
 
 Official manifest, submission requirements, developer policies, plugin guidelines and release instructions were rechecked on 2026-10-29. Local metadata, disclosures and licensing checks do not establish minimum-version runtime compatibility, directory name availability or community approval.
+
+## Rename collision repair — 2026-10-29
+
+agent decision 2026-10-28: reuse the existing first-occurrence/top-wins policy after note/folder remapping because rename can collide with a stale destination pin. Normalize synchronously before saving; retain unrelated missing pins. Sorting also consumes each matched path once so duplicate/conflicting stored pins cannot emit a supplied item twice. Persistence scheduling is unchanged.
+
+The persisted actual-source regressions fail against starting source `144b295`: **9 of 16** Pinit cases fail (the six prior cases and ordinary move pass). The original two-item case returns three entries. New coverage includes top/bottom duplicates with either first occurrence, both cross-side directions, folders/descendants, boundary siblings, unaffected order, missing pins, exact item identities/multiplicity, saved/reloaded settings and defensive sorting without input/settings mutation. `PINIT_SOURCE` can select an alternate source for baseline replay.
+
+Final `npm run qa` passes **16/16 tests**, zero-warning lint, TypeScript, production build and package checks; `git diff --check` passes. The rebuilt `main.js` contains this fix. File Placer's single shared suite passes **12/12** cases (four existing plus eight rename/lifecycle cases), against both actual plugins with explorer/storage doubles. The eight added cases fail against starting Pinit source. Both load orders, both rename-handler orders, either plugin's disable/re-enable from saved settings, folder placement remapping and final ordinary sorting are covered with identity/multiplicity assertions. File Placer production source/assets are unchanged; its own QA passes 17 tests.
+
+This is local host-double evidence, not a live Obsidian observation or filesystem persistence test. [RUNTIME-SORTING.md](../../obsidian-file-placer/docs/RUNTIME-SORTING.md) remains the single shared runtime record; its blocked live sorting and the mobile/popout/minimum-version gates above remain open. No app-access retry or installation into the personal vault occurred. Nothing was pushed, tagged, released or submitted.

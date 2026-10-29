@@ -20,6 +20,7 @@ This is a local submission candidate, not a published community release. To inst
 - Use **Move up** and **Move down** to reorder pins on the same side in the same folder.
 - Choose **Unpin from top/bottom** to return an item to normal sorting. Switching sides removes its previous pin.
 - Pins show a small pin beside their name and follow notes and folders renamed or moved within Obsidian. Deleting an item removes its pin.
+- If a rename or move meets a saved pin for the destination, duplicates collapse at their first position in each list; top wins if the resulting path is on both sides. This applies to folders and descendants. Other pins keep their relative order, including saved paths that are currently missing.
 - The plugin settings list every pin with an **Unpin** button.
 
 The command palette also offers **Pin current note to top**, **Pin current note to bottom**, **Unpin current note**, **Move current note's pin up**, and **Move current note's pin down**. Commands appear only when applicable. No hotkeys are assigned automatically.
@@ -40,7 +41,7 @@ Pins are stored in this plugin's `data.json`. No note contents are edited. No ac
 
 - `npm run dev`: rebuild while editing.
 - `npm run lint`: official Obsidian ESLint rules and TypeScript-aware checks.
-- `npm test`: duplicate/conflicting pins, sibling ordering, renames, deletion, migration, and unload regressions.
+- `npm test`: duplicate/conflicting pins, rename collisions and reload persistence, exact sorting identities, sibling ordering, deletion, migration, and unload regressions.
 - `npm run build`: strict TypeScript check and production bundle.
 - `npm run qa`: all checks plus manifest/package/version and artifact validation.
 
