@@ -24,7 +24,7 @@ This is a local submission candidate, not a published community release. To inst
 
 The command palette also offers **Pin current note to top**, **Pin current note to bottom**, **Unpin current note**, **Move current note's pin up**, and **Move current note's pin down**. Commands appear only when applicable. No hotkeys are assigned automatically.
 
-Pins work at every folder depth and override the file explorer's normal sort. Unpinned items retain that normal ordering. File Placer respects these pins.
+Pins work at every folder depth and override the file explorer's normal sort. Unpinned items retain that normal ordering, or their File Placer order when it is enabled. With both current local candidates installed, disabling Pinit immediately restores File Placer's placed order; re-enabling restores saved pins. Install both updated candidates for this cleanup fix.
 
 ## Import existing pins
 
@@ -34,7 +34,7 @@ This plugin is independent of Pinit by Habit Labs. It does not modify those plug
 
 ## Data and privacy
 
-Pins are stored in this plugin's `data.json`. No note contents are edited. No accounts, network calls, telemetry, or paid services are used. Disabling the plugin removes pin styling and restores normal sorting; saved pins remain for the next enable.
+Pins are stored in this plugin's `data.json`. No note contents are edited. No accounts, network calls, telemetry, or paid services are used. Disabling the plugin removes pin styling and pin ordering; other enabled sorting plugins still apply. Saved pins remain for the next enable.
 
 ## Development and review
 
@@ -43,6 +43,8 @@ Pins are stored in this plugin's `data.json`. No note contents are edited. No ac
 - `npm test`: duplicate/conflicting pins, sibling ordering, renames, deletion, migration, and unload regressions.
 - `npm run build`: strict TypeScript check and production bundle.
 - `npm run qa`: all checks plus manifest/package/version and artifact validation.
+
+When File Placer is checked out beside this repository, run `npm run test:integration` from that checkout to test both actual plugins together through both load orders and disable/re-enable cycles. Its integration suite is the single home for this shared behavior; the test uses an explorer double and does not replace the real-app checks below.
 
 Sorting wraps the internal `getSortedFolderItems` method with monkey-around. The wrapper is removed on unload, and unsupported explorer APIs produce a notice. Public API usage is checked against the declared minimum version; the real-app compatibility checklist is in [docs/REVIEW.md](docs/REVIEW.md). Other file-explorer sorting plugins may conflict.
 

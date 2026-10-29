@@ -129,6 +129,11 @@ var PinitToTopOrBottomPlugin = class extends import_obsidian.Plugin {
       view.requestSort();
     });
   }
+  // Sorting integrations must stop honoring pins as soon as this wrapper is removed,
+  // even while the host still has this plugin in its loaded-plugin registry.
+  getActivePins() {
+    return this.unpatch && !this.unloaded ? this.settings : null;
+  }
   sideOf(path) {
     return SIDES.find((side) => this.settings[side].includes(path)) ?? null;
   }

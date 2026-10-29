@@ -77,6 +77,12 @@ export default class PinitToTopOrBottomPlugin extends Plugin {
 		});
 	}
 
+	// Sorting integrations must stop honoring pins as soon as this wrapper is removed,
+	// even while the host still has this plugin in its loaded-plugin registry.
+	getActivePins(): Readonly<PinitSettings> | null {
+		return this.unpatch && !this.unloaded ? this.settings : null;
+	}
+
 	sideOf(path: string): Side | null {
 		return SIDES.find((side) => this.settings[side].includes(path)) ?? null;
 	}

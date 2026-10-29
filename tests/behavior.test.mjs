@@ -36,3 +36,19 @@ test("an unloaded plugin cannot patch a late layout callback",()=>{
   app.workspace.getLeavesOfType=()=>{throw Error("should not inspect workspace");};
   plugin.patchFileExplorer();
 });
+
+test("sorting integrations receive pins only while the explorer wrapper is active",()=>{
+  const {plugin,app}=fixture();
+  plugin.settings={top:["a.md"],bottom:["z.md"]};
+  class Explorer {
+    getSortedFolderItems(){return [];}
+    requestSort(){}
+  }
+  app.workspace.getLeavesOfType=()=>[{view:new Explorer()}];
+  assert.equal(plugin.getActivePins(),null);
+  plugin.patchFileExplorer();
+  assert.deepEqual(plugin.getActivePins(),{top:["a.md"],bottom:["z.md"]});
+  plugin.onunload();
+  assert.equal(plugin.getActivePins(),null);
+  assert.deepEqual(plugin.settings,{top:["a.md"],bottom:["z.md"]});
+});
